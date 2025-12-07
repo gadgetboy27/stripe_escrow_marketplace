@@ -21,8 +21,8 @@ const App = () => {
     try {
       if (window.ethereum) {
         await window.ethereum.enable();
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
         const account = await signer.getAddress();
         setAccount(account);
         setMarketplace(new ethers.Contract(Marketplace.networks[networkId].address, Marketplace.abi, signer));
@@ -37,11 +37,12 @@ const App = () => {
 
   const loadBlockchainData = async () => {
     try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
       const account = await signer.getAddress();
       setAccount(account);
-      const networkId = await provider.getNetwork().chainId;
+      const network = await provider.getNetwork();
+      const networkId = Number(network.chainId);
       const networkData = Marketplace.networks[networkId];
 
       if (networkData) {
@@ -49,7 +50,7 @@ const App = () => {
         setMarketplace(marketplace);
 
         const productCount = await marketplace.productCount();
-        setProductCount(productCount.toNumber());
+        setProductCount(Number(productCount));
 
         const products = [];
         for (let i = 1; i <= productCount; i++) {
@@ -81,7 +82,7 @@ const App = () => {
   const purchaseProduct = async (id, price) => {
     try {
       setLoading(true);
-      await marketplace.purchaseProduct(id, { value: ethers.utils.parseEther(price.toString()) });
+      await marketplace.purchaseProduct(id, { value: ethers.parseEther(price.toString()) });
     } catch (error) {
       console.error('Error purchasing product:', error);
     } finally {
